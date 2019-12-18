@@ -22,7 +22,7 @@ class SetupWindow(QMainWindow):
         self.teams = []
         self.max_teams = 5
 
-        self.title = "Setup"
+        self.title = 'Setup'
         self.top = 200
         self.left = 500
         self.width = 750
@@ -49,6 +49,7 @@ class SetupWindow(QMainWindow):
         add_button.resize(30, 30)
         add_button.clicked.connect(self.add_button_on_click)
 
+        # TODO Put minus next to teams, use a factory function
         minus_button = QPushButton('-', self)
         minus_button.setFont(QFont('Arial', 20))
         minus_button.move(410, 125)
@@ -102,12 +103,13 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.teams = teams
+        self.turn = 0
         self.topics = parse_game_data('game_data.txt')
         
         self.padding = 50
         self.team_height = 200
 
-        self.title = "Main"
+        self.title = 'Main'
         self.initUI()
 
     def initUI(self):
@@ -122,32 +124,38 @@ class MainWindow(QMainWindow):
         team_width = (1920 - 2*self.padding) / len(self.teams)
 
         for i, team in enumerate(self.teams):
+            x = self.padding + i*team_width
+            y = self.padding
             team_name = QLabel(team.name, self)
             team_name.setFont(QFont('Arial', 24))
-            team_name.move(self.padding+i*team_width, self.padding)
-            team_name.resize(team_width, 30)
+            team_name.move(int(x), int(y))
+            team_name.resize(int(team_width), 30)
             
             team_points = QLabel(f'{team.score}', self)
             team_points.setFont(QFont('Arial', 30))
-            team_points.move(self.padding+i*team_width, self.padding+50)
+            team_points.move(int(x), int(y)+50)
             team_points.adjustSize()
             
 
         topic_width = (1920 - 2*self.padding) / len(self.topics)
         for i, topic in enumerate(self.topics):
+            x = self.padding+ i*topic_width
+            y = self.team_height+self.padding
             topic_name = QLabel(topic.name, self)
             topic_name.setFont(QFont('Arial', 24))
-            topic_name.move(self.padding+ i*topic_width, self.team_height+self.padding)
+            topic_name.move(int(x), int(y))
             topic_name.adjustSize()
 
             question_height = (1080 - self.team_height - 2*self.padding - 100) / len(topic.questions)
 
             for ii, question in enumerate(topic.questions):
+                xx = self.padding+ i*topic_width
+                yy = self.team_height + self.padding + 100 + ii*question_height
                 question_button = QPushButton(f'{question.points}', self)
                 question_button.setFont(QFont('Arial', 40))
-                question_button.move(self.padding+ i*topic_width, self.team_height + self.padding + 100 + ii*question_height)
-                question_button.resize(topic_width, question_height)
-                #question_button.clicked.connect(self.exit_button_on_click)
+                question_button.move(int(xx), int(yy))
+                question_button.resize(int(topic_width), int(question_height))
+                question_button.clicked.connect(self.question_func_maker(question))
 
     def paintEvent(self, event):
         pad = self.padding
@@ -163,6 +171,54 @@ class MainWindow(QMainWindow):
     def exit_button_on_click(self):
         self.close()
 
+    def question_func_maker(self, question):
+        @pyqtSlot()
+        def question_click():
+            self.question_window = QuestionWindow(question)
+            self.question_window.showFullScreen()
+        return question_click
+
+
+class QuestionWindow(QMainWindow):
+
+    def __init__(self, question):
+        super().__init__()
+
+        self.question = question
+
+        self.title = f'{question.question}'
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        
+        question_text = QLabel(f'{self.question.question}', self)
+        question_text.setFont(QFont('Arial', 40))
+        question_text.adjustSize()
+        x = (1920 - question_text.width()) / 2
+        y = (1080 - question_text.height()) / 2 - 150
+        question_text.move(int(x), int(y))
+
+        self.answer_text = QLabel(f'{self.question.answer}', self)
+        self.answer_text.setFont(QFont('Arial', 40))
+        self.answer_text.adjustSize()
+        x = (1920 - self.answer_text.width()) / 2
+        y = (1080 - self.answer_text.height()) / 2 + 150
+        self.answer_text.move(int(x), int(y))
+        self.answer_text.hide()
+
+        points_text = QLabel(f'{self.question.points}', self)
+        points_text.setFont(QFont('Arial', 50))
+        points_text.adjustSize()
+        points_text.move(30, 30)
+
+        show_answer_button = QPushButton('Show Answer', self)
+        show_answer_button.setFont(QFont('Arial', 30))
+        show_answer_button.resize(300, 100)
+        x = (1920 - show_answer_button.width()) / 2
+        y = 1080 - 200
+        show_answer_button.move(x, y)
+        show_answer_button.clicked.connect(self.answer_text.show)
 
 
 if __name__ == '__main__':
