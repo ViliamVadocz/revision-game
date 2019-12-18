@@ -3,6 +3,7 @@
 from data_parser import parse_game_data
 
 import sys
+import time
 
 from PyQt5.QtGui     import *
 from PyQt5.QtCore    import *
@@ -174,17 +175,22 @@ class MainWindow(QMainWindow):
     def question_func_maker(self, question):
         @pyqtSlot()
         def question_click():
-            self.question_window = QuestionWindow(question)
+            self.question_window = QuestionWindow(question, self.teams, self.turn)
             self.question_window.showFullScreen()
+            # TODO Delete question
+            self.turn += 1
+            self.turn %= len(self.teams)
         return question_click
 
 
 class QuestionWindow(QMainWindow):
 
-    def __init__(self, question):
+    def __init__(self, question, teams, turn):
         super().__init__()
 
         self.question = question
+        self.teams = teams
+        self.turn = turn
 
         self.title = f'{question.question}'
         self.initUI()
@@ -212,13 +218,61 @@ class QuestionWindow(QMainWindow):
         points_text.adjustSize()
         points_text.move(30, 30)
 
-        show_answer_button = QPushButton('Show Answer', self)
-        show_answer_button.setFont(QFont('Arial', 30))
-        show_answer_button.resize(300, 100)
-        x = (1920 - show_answer_button.width()) / 2
+        self.show_answer_button = QPushButton('Show Answer', self)
+        self.show_answer_button.setFont(QFont('Arial', 30))
+        self.show_answer_button.resize(300, 100)
+        x = (1920 - self.show_answer_button.width()) / 2
         y = 1080 - 200
-        show_answer_button.move(x, y)
-        show_answer_button.clicked.connect(self.answer_text.show)
+        self.show_answer_button.move(int(x), int(y))
+        self.show_answer_button.clicked.connect(self.show_answer_button_on_click)
+
+        self.team_labels = []
+        self.team_points = []
+        for i, team in enumerate(self.teams):
+            x = 50
+            y = 150 + 50*i
+
+            team_name = QLabel(team.name, self)
+            team_name.setFont(QFont('Arial', 24))
+            team_name.move(int(x)+100, int(y))
+            team_name.adjustSize()
+            team_name.hide()
+            self.team_labels.append(team_name)
+            
+            points = self.question.points if self.turn == i else 0
+            team_points = QLineEdit(f'{points}', self)
+            team_points.setFont(QFont('Arial', 24))
+            team_points.move(int(x), int(y))
+            team_points.resize(80, 40)
+            team_points.hide()
+            self.team_points.append(team_points)
+            
+        self.accept_button = QPushButton('Confirm',self)
+        self.accept_button.setFont(QFont('Arial', 30))
+        self.accept_button.resize(300, 100)
+        x = (1920 - self.accept_button.width()) / 2
+        y = 1080 - 200
+        self.accept_button.move(int(x), int(y))
+        self.accept_button.clicked.connect(self.accept_button_on_click)
+        self.accept_button.hide()
+
+    @pyqtSlot()
+    def show_answer_button_on_click(self):
+        self.answer_text.show()
+
+        for i in range(len(self.teams)):
+            self.team_labels[i].show()
+            self.team_points[i].show()
+
+        self.show_answer_button.hide()
+        time.sleep(0.2)
+        self.accept_button.show()
+
+    def accept_button_on_click(self):
+        for i, team in enumerate(self.teams):
+            team.score += int(self.team_points[i].text())
+
+        self.close()
 
 
 if __name__ == '__main__':
