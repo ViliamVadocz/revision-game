@@ -25,3 +25,4 @@ Replace the example text in `game_data.txt` with your topics, questions, and ans
 - There is no set limit on the length or number of questions inside each topic. Be warned that putting too many questions in might not look good.
 - Questions do not have to end with a question mark `?`. They can also be commands such as *Discuss the impact of the Stock Market Crash in 1929 on Hitler's rise to power.* Anything before the first semi-colon `;` in the line will be displayed.
 - The points should be integer values.
+- **Two empty lines at the end of the `game_data.txt` file are required!**
