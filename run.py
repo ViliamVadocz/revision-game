@@ -191,7 +191,13 @@ class MainWindow(QMainWindow):
     def game_end(self):
         # TODO Open END GAME Window
         self.close()
-        print('END GAME')
+        print('END OF GAME!')
+        highest = self.teams[0]
+        for team in self.teams:
+            print(f'{team.name} : {team.score}')
+            if team.score > highest:
+                highest = team
+        print('WINNER IS {highest.name} with {highest.score}!')
 
 
 class QuestionWindow(QMainWindow):
