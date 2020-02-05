@@ -1,26 +1,13 @@
 ExampleTopic1
 First Question?;First answer;100
-Second Question?;Second answer;200
-Third Question?;Third answer;300
 
 ExampleTopic2
 First Question?;First answer;100
-Second Question?;Second answer;200
-Third Question?;Third answer;300
-Fourth Question?;Fourth answer;400
-Fifth Question?;Fifth answer;500
-Sixth Question?;Sixth answer;600
 
 ExampleTopic3
 First Question?;First answer;100
 Second Question?;Second answer;200
-Third Question?;Third answer;300
-Fourth Question?;Fourth answer;400
 
 ExampleTopic4
 First Question?;First answer;100
-Second Question?;Second answer;200
-Third Question?;Third answer;300
-Fourth Question?;Fourth answer;400
-Fifth Question?;Fifth answer;500
 

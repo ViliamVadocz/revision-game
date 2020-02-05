@@ -106,6 +106,8 @@ class MainWindow(QMainWindow):
         self.teams = teams
         self.turn = 0
         self.topics = parse_game_data('game_data.txt')
+        self.total_q = 0
+        self.ans_q = 0
         
         self.padding = 50
         self.team_height = 200
@@ -124,19 +126,23 @@ class MainWindow(QMainWindow):
 
         team_width = (1920 - 2*self.padding) / len(self.teams)
 
+        self.team_name_labels = []
+        self.team_point_labels = []
         for i, team in enumerate(self.teams):
             x = self.padding + i*team_width
             y = self.padding
             team_name = QLabel(team.name, self)
             team_name.setFont(QFont('Arial', 24))
             team_name.move(int(x), int(y))
-            team_name.resize(int(team_width), 30)
+            team_name.resize(int(team_width)-30, 40)
+            self.team_name_labels.append(team_name)
+            if i == 0: team_name.setStyleSheet("border: 2px solid blue;")
             
             team_points = QLabel(f'{team.score}', self)
             team_points.setFont(QFont('Arial', 30))
             team_points.move(int(x), int(y)+50)
             team_points.adjustSize()
-            
+            self.team_point_labels.append(team_points)
 
         topic_width = (1920 - 2*self.padding) / len(self.topics)
         for i, topic in enumerate(self.topics):
@@ -150,13 +156,14 @@ class MainWindow(QMainWindow):
             question_height = (1080 - self.team_height - 2*self.padding - 100) / len(topic.questions)
 
             for ii, question in enumerate(topic.questions):
+                self.total_q += 1 # FInds total num of questions
                 xx = self.padding+ i*topic_width
                 yy = self.team_height + self.padding + 100 + ii*question_height
                 question_button = QPushButton(f'{question.points}', self)
                 question_button.setFont(QFont('Arial', 40))
                 question_button.move(int(xx), int(yy))
                 question_button.resize(int(topic_width), int(question_height))
-                question_button.clicked.connect(self.question_func_maker(question))
+                question_button.clicked.connect(self.question_func_maker(question, question_button))
 
     def paintEvent(self, event):
         pad = self.padding
@@ -167,30 +174,39 @@ class MainWindow(QMainWindow):
         # Draw horizontal line.
         painter.drawLine(pad, self.team_height, 1920-pad, self.team_height)
 
-
     @pyqtSlot()
     def exit_button_on_click(self):
         self.close()
 
-    def question_func_maker(self, question):
+    def question_func_maker(self, question, question_button):
         @pyqtSlot()
         def question_click():
-            self.question_window = QuestionWindow(question, self.teams, self.turn)
+            self.question_window = QuestionWindow(question, self)
             self.question_window.showFullScreen()
-            # TODO Delete question
+            question_button.hide()
             self.turn += 1
             self.turn %= len(self.teams)
         return question_click
 
+    def game_end(self):
+        # TODO Open END GAME Window
+        self.close()
+        print('END GAME')
+
 
 class QuestionWindow(QMainWindow):
 
-    def __init__(self, question, teams, turn):
+    def __init__(self, question, main_window):
         super().__init__()
 
         self.question = question
-        self.teams = teams
-        self.turn = turn
+        self.main_window = main_window
+
+        # Ugly code but idc
+        self.teams = main_window.teams
+        self.turn = main_window.turn
+        self.team_point_labels = main_window.team_point_labels
+        self.team_name_labels = main_window.team_name_labels
 
         self.title = f'{question.question}'
         self.initUI()
@@ -265,15 +281,24 @@ class QuestionWindow(QMainWindow):
             self.team_points[i].show()
 
         self.show_answer_button.hide()
-        time.sleep(0.2)
+        time.sleep(0.2) # Sleep to prevent accidental click on accept
         self.accept_button.show()
 
     def accept_button_on_click(self):
         for i, team in enumerate(self.teams):
             team.score += int(self.team_points[i].text())
+            self.team_point_labels[i].setText(f'{team.score}')
+            self.team_point_labels[i].adjustSize()
+            if i == (self.turn + 1) % len(self.teams):
+                self.team_name_labels[i].setStyleSheet("border: 2px solid blue;")
+            else:
+                self.team_name_labels[i].setStyleSheet("border: 0px;")
+
+        self.main_window.ans_q += 1
+        if self.main_window.ans_q == self.main_window.total_q:
+            self.main_window.game_end()
 
         self.close()
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
